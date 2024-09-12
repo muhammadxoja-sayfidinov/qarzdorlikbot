@@ -509,21 +509,17 @@ async def send_file(update: Update, context: CallbackContext) -> None:
 
     for user, balance in accounts.items():
         user_history = history.get(user, [])
-        # Intga o'tkazish va 3 xonadan ajratish
         formatted_balance = f"{int(balance):,}".replace(",", " ")
 
         formatted_history = []
         for entry in user_history:
             try:
-                # Ma'lumotlarni to'g'ri qismlarga ajratish
                 date, transaction_type, balance_part, admin_part = entry.split(" - ")
-                balance = int(float(balance_part.split(": ")[1]))  # Floatdan int ga o'girish
-                # Int ga o'tkazib formatlash va 3 xonadan ajratish
-                formatted_balance = f"{balance:,}".replace(",", " ")
-                formatted_history.append(f"{date} - {transaction_type} - Balans: {formatted_balance} - {admin_part}")
+                transaction_balance = int(float(balance_part.split(": ")[1]))
+                formatted_transaction_balance = f"{transaction_balance:,}".replace(",", " ")
+                formatted_history.append(f"{date} - {transaction_type} - Balans: {formatted_transaction_balance} - {admin_part}")
             except (ValueError, IndexError):
-                # Agar xato bo'lsa, bu qatorni o'tkazib yuboramiz
-                continue
+                formatted_history.append(entry)  # If parsing fails, add the original entry
 
         combined_data[user] = {
             "history": formatted_history,
@@ -532,13 +528,10 @@ async def send_file(update: Update, context: CallbackContext) -> None:
 
     combined_filename = "combined_data_export.json"
 
-    # Combined ma'lumotlarni faylga yozish
-    with open(combined_filename, 'w') as combined_file:
+    with open(combined_filename, 'w', encoding='utf-8') as combined_file:
         json.dump(combined_data, combined_file, indent=4, ensure_ascii=False)
 
-    # Faylni yuborish
     await context.bot.send_document(chat_id=update.effective_chat.id, document=open(combined_filename, 'rb'), caption="Bazada barcha ma'lumotlar (tarix va balans)")
-
 # Botni ishga tushirish
 async def main():
     application = Application.builder().token("1804879860:AAGtvPp3GKuIk7KHRcHTU5S4ayR0dc-6aF8").build()
